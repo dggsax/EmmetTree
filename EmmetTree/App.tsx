@@ -1,29 +1,64 @@
-import React, { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View, StatusBar, Platform } from 'react-native';
-import InternetStatus from './components/InternetStatus';
+import React from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  View,
+  StatusBar,
+  Platform,
+  Button
+} from 'react-native';
 import Home from './components/Home';
-import useDecisionTree, { IDecisionTree } from './hooks/useDecisionTree';
+import QuestionHome from './components/QuestionHome';
+import useDecisionTree from './hooks/useDecisionTree';
+import { createAppContainer } from 'react-navigation';
+import { createStackNavigator } from 'react-navigation-stack';
 
+const MainNavigator = createStackNavigator({
+  Home: {
+    screen: Base,
+    navigationOptions: {
+      headerShown: false,
+    }
+  },
+  QuestionHome: {
+    screen: QuestionHome,
+  }
+});
+
+const AppContainer = createAppContainer(MainNavigator);
 
 export default function App() {
-  const tree = useDecisionTree();
+  return (
+    <AppContainer />
+  )
+}
 
+function Base(props) {
+  const { treeText, refreshTreeFromWeb}  = useDecisionTree();
+  
   return (
     <View>
-      <MyStatusBar />
+      {Platform.OS === 'ios' ? (
+        <MyStatusBar />
+      ) : (
+        <></>
+      )}
+
 
       <View style={styles.container}>
 
         {/* This is the header */}
         <View style={styles.header}>
           <Text style={styles.headerText}>Hi, Emmet!</Text>
-          <InternetStatus />
+          <Button title="Refresh" onPress={refreshTreeFromWeb}/>
+          {/* <InternetStatus /> */}
         </View>
 
         {/* This is where the body goes */}
         {
-          tree !== undefined ? (
-            <Home decisionTree={tree} />
+          treeText !== undefined ? (
+            <Home decisionTree={treeText} {...props} />
           ) : (
               <ActivityIndicator size="large" />
             )
@@ -37,7 +72,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'column',
-    backgroundColor: '#fff',
+    backgroundColor: '#fafafa',
     justifyContent: 'space-between',
   },
   header: {
@@ -47,7 +82,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'pink'
   },
   headerText: {
     fontSize: 30
@@ -55,7 +89,7 @@ const styles = StyleSheet.create({
 });
 
 const MyStatusBar: React.FC = () => {
-  const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 20 : StatusBar.currentHeight;
+  const STATUSBAR_HEIGHT = Platform.OS === 'ios' ? 30 : StatusBar.currentHeight;
 
   return (
     <View style={{ height: STATUSBAR_HEIGHT }} >

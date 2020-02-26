@@ -1,59 +1,93 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableHighlight } from 'react-native';
 import { IDecisionTree, ICategory } from '../hooks/useDecisionTree';
+import { NavigationScreenProp } from 'react-navigation';
 
 interface IProps {
-  decisionTree: IDecisionTree
+  decisionTree: IDecisionTree,
+  navigation: NavigationScreenProp<any, any>
 }
 
 const Home: React.FC<IProps> = (props) => {
-  useEffect(() => {
-    console.log(props.decisionTree)
-  }, [])
-
   return (
-    <View style={styles.container}>
-      <Categories categories={props.decisionTree.categories} />
+    <View>
+      <Categories
+        categories={props.decisionTree.categories}
+        navigation={props.navigation}
+        tree={props.decisionTree} />
     </View>
   )
 }
 
 interface ICategoriesProps {
-  categories: ICategory[]
+  categories: ICategory[],
+  navigation: NavigationScreenProp<any, any>,
+  tree: IDecisionTree
 }
 
 const Categories: React.FC<ICategoriesProps> = (props) => {
-  console.log(props)
-
-  Object.values(props.categories).map(category => console.log(category))
 
   return (
     <View style={styles.categoriesContainer}>
-      {Object.values(props.categories).map((category, i) => {
-          return (
-            <View style={[styles.categoryCard, {backgroundColor: 'orange'}]} key={i} >
-              <Text>{category.title}</Text>
-            </View>
+      {/* We use a FlatList because it creates a native scrollable view! */}
+      <FlatList
+        data={props.categories}
+        renderItem={
+          ({ item }) => (
+            <TouchableHighlight
+              onPress={_ => {
+                props.navigation.navigate('QuestionHome', {
+                  category: item,
+                  tree: props.tree
+                })
+              }}
+              underlayColor={'white'}
+              activeOpacity={.9}
+              style={[styles.categoryCard, { backgroundColor: item.color.toLowerCase() }]} >
+              <>
+                <Text style={styles.categoryTitle}>{item.title}</Text>
+                <Text style={styles.categoryDetails}>{item.details}</Text>
+              </>
+            </TouchableHighlight>
           )
-      })}
+        }
+        keyExtractor={item => item.title}
+      />
     </View>
   )
 }
 
 
 const styles = StyleSheet.create({
-  container: {
-    // flex: 1,
-    justifyContent: 'center',
-    backgroundColor: 'green'
-  },
   categoriesContainer: {
     paddingLeft: 10,
-    paddingRight: 10
+    paddingRight: 10,
+    height: '100%'
   },
   categoryCard: {
-    // backgroundColor: 'blue',
-    marginTop: 10
+    marginTop: 10,
+    height: 80,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 5,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+
+    elevation: 3,
+  },
+  categoryTitle: {
+    fontSize: 30,
+    paddingLeft: 5,
+    flex: 1 / 2
+  },
+  categoryDetails: {
+    textAlign: 'left',
+    flex: 1
   }
 })
 export default Home;

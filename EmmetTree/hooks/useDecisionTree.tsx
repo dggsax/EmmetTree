@@ -4,6 +4,7 @@ import { useNetInfo } from "@react-native-community/netinfo";
 
 
 const BASE_URL = 'http://ppat-2019-team-emmet.herokuapp.com';
+// const BASE_URL = 'http://localhost:5000';
 const TREE_KEY = '@TREE';
 
 export interface ICategory {
@@ -45,43 +46,51 @@ const useDecisionTree = () => {
      * the client load the tree
      */
     useEffect(() => {
-
-        async function loadTree() {
-            try {
-                let storageTreeText = await retrieveTreeFromStorage();
-
-                let storageTreeJson: IDecisionTree = JSON.parse(storageTreeText);
-
-                setTreeText(storageTreeJson);
-            } catch (e) {
-                console.log(e);
-                alert("Gibberish was found for the tree text, please reload the app")
-            }
-        }
-
-        console.debug("Calling function to load tree now");
         loadTree();
     }, [])
 
-    const retrieveTreeFromWeb = async () => {
-        console.debug(netInfo);
-        if (netInfo.isInternetReachable) {
-            console.debug("Internet is reachable!");
-            return fetch(BASE_URL + '/getAll')
-                .then(res => {
-                    return res.json()
-                })
-                .catch(error => {
-                    console.log("unable to get tree")
-                    console.log("blah");
-                    return null
-                })
-        } else if (netInfo.isConnected) {
-            throw Error("Device is connected to a network, but is unable to reach the website to download most recent version of the decision tree. Please make sure the device has internet access.");
-        } else {
-            throw Error("Device does not appear to be connected to any network. The decision tree is not stored on the device right now, so we are unable to display anything.");
+    const loadTree = async () => {
+        try {
+            let storageTreeText = await retrieveTreeFromStorage();
+
+            let storageTreeJson: IDecisionTree = JSON.parse(storageTreeText);
+
+            setTreeText(storageTreeJson);
+        } catch (e) {
+            alert(e);
         }
-        
+    }
+
+    const retrieveTreeFromWeb = async () => {
+        return fetch(BASE_URL + '/getAll')
+            .then(res => {
+                if (res.ok) {
+                    return res.json()
+                } else {
+                    throw new Error('Network request failed with status: ' + res.status + ' and message: ' + res.statusText)
+                }
+            })
+            .catch(error => {
+                throw error;
+            })
+        // console.debug(netInfo);
+        // if (netInfo.isInternetReachable) {
+        //     console.debug("Internet is reachable!");
+        //     return fetch(BASE_URL + '/getAll')
+        //         .then(res => {
+        //             return res.json()
+        //         })
+        //         .catch(error => {
+        //             console.log("unable to get tree")
+        //             console.log("blah");
+        //             return null
+        //         })
+        // } else if (netInfo.isConnected) {
+        //     throw Error("Device is connected to a network, but is unable to reach the website to download most recent version of the decision tree. Please make sure the device has internet access.");
+        // } else {
+        //     throw Error("Device does not appear to be connected to any network. The decision tree is not stored on the device right now, so we are unable to display anything.");
+        // }
+
     }
 
     /**
@@ -102,15 +111,33 @@ const useDecisionTree = () => {
                 console.debug("Unable to retrieve decision tree from storage, attempting to retrieve online.");
                 const webResponseObject = await retrieveTreeFromWeb();
                 console.debug("Response received from online, storing response now.");
-                
+
                 return await storeTreeToStorage(webResponseObject);
                 // alert("Unable to acquire from storage");
             }
 
         } catch (e) {
-            // console.log(e);
-            throw(e)
-            // alert("Issue when acquiring decision tree data from storage");
+            throw (e)
+        }
+    }
+
+    const refreshTreeFromWeb = async () => {
+        let originalVersion = treeText.version;
+
+        try {
+            await removeTreeFromStorage();
+
+            await loadTree();
+        } catch (e) {
+            throw e;
+        }
+    }
+
+    const removeTreeFromStorage = async () => {
+        try {
+            await AsyncStorage.removeItem(TREE_KEY);
+        } catch (e) {
+            throw e;
         }
     }
 
@@ -137,7 +164,7 @@ const useDecisionTree = () => {
         }
     }
 
-    return treeText;
+    return { treeText, refreshTreeFromWeb };
     // return treeText
 }
 
