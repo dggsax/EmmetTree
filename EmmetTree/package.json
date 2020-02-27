@@ -12,7 +12,7 @@
     "@react-native-community/netinfo": "^5.3.3",
     "expo": "~36.0.0",
     "react": "~16.9.0",
-    "react-dom": "~16.9.0",
+    "react-dom": "~16.13.0",
     "react-native": "~0.61.4",
     "react-native-gesture-handler": "^1.5.3",
     "react-native-reanimated": "~1.7.0",
